@@ -60,7 +60,10 @@ export function SettingsModal({
               <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'var(--glass-divider)' }}>
                 <div className="flex items-center gap-3">
                   <SettingsIcon className="w-5 h-5" style={{ color: '#8b5cf6' }} />
-                  <h2 className="text-xl text-white" style={{ fontFamily: 'var(--font-heading)' }}>SETTINGS</h2>
+                  <div>
+                    <h2 className="text-xl text-white" style={{ fontFamily: 'var(--font-heading)' }}>SETTINGS</h2>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Default values applied on next launch</p>
+                  </div>
                 </div>
                 <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
                   <X className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
@@ -105,7 +108,7 @@ export function SettingsModal({
                         style={{ background: 'var(--input-background)', borderColor: 'var(--glass-border)', color: 'var(--text-primary)' }}
                       >
                         {CAMERA_OPTIONS.map(o => (
-                          <option key={o.value} value={o.value} className="bg-gray-900">{o.label}</option>
+                          <option key={o.value} value={o.value} className="bg-[#1a1535]">{o.label}</option>
                         ))}
                       </select>
                     </div>

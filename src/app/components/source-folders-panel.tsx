@@ -1,5 +1,6 @@
 import { FolderOpen, X, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 interface SourceFoldersPanelProps {
   folders: string[];
@@ -8,6 +9,7 @@ interface SourceFoldersPanelProps {
 }
 
 export function SourceFoldersPanel({ folders, onAddFolder, onRemoveFolder }: SourceFoldersPanelProps) {
+  const { t } = useTranslation();
   return (
     <div 
       className="rounded-2xl p-4 backdrop-blur-lg border"
@@ -19,10 +21,10 @@ export function SourceFoldersPanel({ folders, onAddFolder, onRemoveFolder }: Sou
     >
       <div className="mb-3">
         <h2 className="text-white mb-0.5" style={{ fontFamily: 'var(--font-heading)' }}>
-          SOURCE FOLDERS
+          {t('sourceFolders.title')}
         </h2>
         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          Supports multiple cards / cameras
+          {t('sourceFolders.subtitle')}
         </p>
       </div>
       
@@ -39,7 +41,7 @@ export function SourceFoldersPanel({ folders, onAddFolder, onRemoveFolder }: Sou
             >
               <Plus className="w-5 h-5 mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                Drop folders here or click to browse
+                {t('sourceFolders.empty')}
               </p>
             </motion.div>
           ) : (
@@ -83,7 +85,7 @@ export function SourceFoldersPanel({ folders, onAddFolder, onRemoveFolder }: Sou
           }}
         >
           <Plus className="w-4 h-4" />
-          <span className="text-sm">Add Folder</span>
+          <span className="text-sm">{t('sourceFolders.addButton')}</span>
         </button>
       )}
     </div>

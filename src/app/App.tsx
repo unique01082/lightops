@@ -1,218 +1,287 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { invoke } from '@tauri-apps/api/core'
-import { listen } from '@tauri-apps/api/event'
-import { useTranslation } from 'react-i18next'
-import { TitleBar } from './components/title-bar'
-import { SourceFoldersPanel } from './components/source-folders-panel'
-import { OutputFolderPanel } from './components/output-folder-panel'
-import { CameraFormatPanel } from './components/camera-format-panel'
-import { RenameSettingsPanel } from './components/rename-settings-panel'
-import { AdvancedOptionsPanel } from './components/advanced-options-panel'
-import { ActionButtons } from './components/action-buttons'
-import { ProgressBar } from './components/progress-bar'
-import { LogPanel, LogEntry } from './components/log-panel'
-import { SettingsModal } from './components/settings-modal'
-import { motion } from 'motion/react'
-import { CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { useTranslation } from "react-i18next";
+import { TitleBar } from "./components/title-bar";
+import { SourceFoldersPanel } from "./components/source-folders-panel";
+import { OutputFolderPanel } from "./components/output-folder-panel";
+import { CameraFormatPanel } from "./components/camera-format-panel";
+import { RenameSettingsPanel } from "./components/rename-settings-panel";
+import { AdvancedOptionsPanel } from "./components/advanced-options-panel";
+import { ActionButtons } from "./components/action-buttons";
+import { ProgressBar } from "./components/progress-bar";
+import { LogPanel, LogEntry } from "./components/log-panel";
+import { SettingsModal } from "./components/settings-modal";
+import { motion } from "motion/react";
+import { CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 
 // ── Types matching Rust structs ────────────────────────────────────────────
 
 interface FilePair {
-  jpg?: string
-  raw?: string
+  jpg?: string;
+  raw?: string;
 }
 
 interface ScanResult {
-  pairs: FilePair[]
-  stats: { total_pairs: number; both: number; jpg_only: number; raw_only: number }
+  pairs: FilePair[];
+  stats: {
+    total_pairs: number;
+    both: number;
+    jpg_only: number;
+    raw_only: number;
+  };
 }
 
 interface RenameEntry {
-  old_path: string
-  new_name: string
-  ts?: string
+  old_path: string;
+  new_name: string;
+  ts?: string;
 }
 
 interface BuildPlanResult {
-  plan: RenameEntry[]
-  skipped_count: number
+  plan: RenameEntry[];
+  skipped_count: number;
 }
 
 interface ProgressEvent {
-  current: number
-  total: number
+  current: number;
+  total: number;
   entry: {
-    entry_type: string
-    source?: string
-    destination?: string
-    message?: string
-  }
-  stats: { ok: number; skip: number; error: number }
+    entry_type: string;
+    source?: string;
+    destination?: string;
+    message?: string;
+  };
+  stats: { ok: number; skip: number; error: number };
 }
 
 interface ExecuteResult {
-  ok: number
-  errors: number
-  cancelled: boolean
+  ok: number;
+  errors: number;
+  cancelled: boolean;
 }
 
 interface UpdateInfo {
-  available: boolean
-  version?: string
-  body?: string
+  available: boolean;
+  version?: string;
+  body?: string;
 }
 
 // Format values → strftime patterns for Rust
 const FORMAT_TO_STRFTIME: Record<string, string | null> = {
-  'YYYYMMDD_HHMMSS_NNNN': '%Y%m%d_%H%M%S',
-  'YYYY-MM-DD_HH-MM-SS_NNNN': '%Y-%m-%d_%H-%M-%S',
-  'YYYYMMDD_NNNN': '%Y%m%d',
-  'NNNN': null,
-}
+  YYYYMMDD_HHMMSS_NNNN: "%Y%m%d_%H%M%S",
+  "YYYY-MM-DD_HH-MM-SS_NNNN": "%Y-%m-%d_%H-%M-%S",
+  YYYYMMDD_NNNN: "%Y%m%d",
+  NNNN: null,
+};
 
-type AppStatus = 'idle' | 'processing' | 'complete' | 'stopped' | 'error'
+type AppStatus = "idle" | "processing" | "complete" | "stopped" | "error";
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
+const STORAGE = {
+  camera: "lightops-default-camera",
+  fileOp: "lightops-default-file-op",
+  recursive: "lightops-default-recursive",
+  organize: "lightops-default-organize",
+};
+
+function loadDefaults() {
+  try {
+    return {
+      camera: localStorage.getItem(STORAGE.camera) ?? "nikon",
+      fileOp: (localStorage.getItem(STORAGE.fileOp) ?? "copy") as
+        | "copy"
+        | "move",
+      recursive: localStorage.getItem(STORAGE.recursive) === "true",
+      organize: localStorage.getItem(STORAGE.organize) === "true",
+    };
+  } catch {
+    return {
+      camera: "nikon",
+      fileOp: "copy" as const,
+      recursive: false,
+      organize: false,
+    };
+  }
+}
+
 function App() {
-  const { t, i18n } = useTranslation()
+  const { t, i18n } = useTranslation();
 
   // Settings
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [defaultCamera, setDefaultCamera] = useState('nikon')
-  const [defaultFileOperation, setDefaultFileOperation] = useState<'copy' | 'move'>('copy')
-  const [defaultRecursiveScan, setDefaultRecursiveScan] = useState(false)
-  const [defaultOrganizeByDate, setDefaultOrganizeByDate] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [defaults] = useState(loadDefaults);
+  const [defaultCamera, setDefaultCamera] = useState(defaults.camera);
+  const [defaultFileOperation, setDefaultFileOperation] = useState<
+    "copy" | "move"
+  >(defaults.fileOp);
+  const [defaultRecursiveScan, setDefaultRecursiveScan] = useState(
+    defaults.recursive,
+  );
+  const [defaultOrganizeByDate, setDefaultOrganizeByDate] = useState(
+    defaults.organize,
+  );
 
   // Source folders
-  const [folders, setFolders] = useState<string[]>([])
+  const [folders, setFolders] = useState<string[]>([]);
 
   // Output folder
-  const [outputFolder, setOutputFolder] = useState('')
+  const [outputFolder, setOutputFolder] = useState("");
 
   // Camera & format
-  const [cameraPreset, setCameraPreset] = useState('nikon')
-  const [rawExtensions, setRawExtensions] = useState('.nef .nrw')
-  const [fileType, setFileType] = useState<'both' | 'jpg' | 'raw'>('both')
+  const [cameraPreset, setCameraPreset] = useState(defaults.camera);
+  const [rawExtensions, setRawExtensions] = useState(() => {
+    const PRESETS: Record<string, string> = {
+      nikon: ".nef .nrw",
+      canon: ".cr2 .cr3",
+      sony: ".arw",
+      fujifilm: ".raf",
+      panasonic: ".rw2",
+      olympus: ".orf",
+      pentax: ".dng .pef",
+      leica: ".dng",
+    };
+    return PRESETS[defaults.camera] ?? ".nef .nrw";
+  });
+  const [fileType, setFileType] = useState<"both" | "jpg" | "raw">("both");
 
   // Rename settings
-  const [prefix, setPrefix] = useState('')
-  const [format, setFormat] = useState('YYYYMMDD_HHMMSS_NNNN')
-  const [startNumber, setStartNumber] = useState(1)
+  const [prefix, setPrefix] = useState("");
+  const [format, setFormat] = useState("NNNN");
+  const [startNumber, setStartNumber] = useState(1);
 
-  // Advanced options
-  const [recursiveScan, setRecursiveScan] = useState(false)
-  const [fileOperation, setFileOperation] = useState<'copy' | 'move'>('copy')
-  const [organizeByDate, setOrganizeByDate] = useState(false)
-  const [onlyPaired, setOnlyPaired] = useState(false)
+  // Advanced options — initialized from defaults
+  const [recursiveScan, setRecursiveScan] = useState(defaults.recursive);
+  const [fileOperation, setFileOperation] = useState<"copy" | "move">(
+    defaults.fileOp,
+  );
+  const [organizeByDate, setOrganizeByDate] = useState(defaults.organize);
+  const [onlyPaired, setOnlyPaired] = useState(false);
 
   // Processing state
-  const [status, setStatus] = useState<AppStatus>('idle')
-  const [isDryRun, setIsDryRun] = useState(false)
-  const [progress, setProgress] = useState({ current: 0, total: 0 })
-  const [logEntries, setLogEntries] = useState<LogEntry[]>([])
-  const [stats, setStats] = useState({ ok: 0, skip: 0, error: 0 })
-  const [banner, setBanner] = useState<{ type: 'success' | 'warning' | 'error'; message: string } | null>(null)
+  const [status, setStatus] = useState<AppStatus>("idle");
+  const [isDryRun, setIsDryRun] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
+  const [stats, setStats] = useState({ ok: 0, skip: 0, error: 0 });
+  const [banner, setBanner] = useState<{
+    type: "success" | "warning" | "error";
+    message: string;
+  } | null>(null);
 
   // Update notification
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   // Ref to append log entries without triggering re-renders mid-run
-  const logRef = useRef<LogEntry[]>([])
+  const logRef = useRef<LogEntry[]>([]);
 
   // Check for updates on mount
   useEffect(() => {
-    invoke<UpdateInfo>('check_update')
-      .then((info) => { if (info.available) setUpdateInfo(info) })
-      .catch(() => { /* silently ignore */ })
-  }, [])
+    invoke<UpdateInfo>("check_update")
+      .then((info) => {
+        if (info.available) setUpdateInfo(info);
+      })
+      .catch(() => {
+        /* silently ignore */
+      });
+  }, []);
 
   const addLog = useCallback((entry: LogEntry) => {
-    logRef.current = [...logRef.current, entry]
-    setLogEntries([...logRef.current])
-  }, [])
+    logRef.current = [...logRef.current, entry];
+    setLogEntries([...logRef.current]);
+  }, []);
 
   // ── Folder actions
 
   const handleAddFolder = useCallback(async () => {
     try {
-      const folder = await invoke<string | null>('pick_folder')
+      const folder = await invoke<string | null>("pick_folder");
       if (folder && !folders.includes(folder)) {
-        setFolders((prev) => [...prev, folder])
+        setFolders((prev) => [...prev, folder]);
       }
     } catch (e) {
-      console.error('pick_folder failed:', e)
+      console.error("pick_folder failed:", e);
     }
-  }, [folders])
+  }, [folders]);
 
   const handleRemoveFolder = useCallback((index: number) => {
-    setFolders((prev) => prev.filter((_, i) => i !== index))
-  }, [])
+    setFolders((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleBrowseOutput = useCallback(async () => {
     try {
-      const folder = await invoke<string | null>('pick_folder')
-      if (folder) setOutputFolder(folder)
+      const folder = await invoke<string | null>("pick_folder");
+      if (folder) setOutputFolder(folder);
     } catch (e) {
-      console.error('pick_folder failed:', e)
+      console.error("pick_folder failed:", e);
     }
-  }, [])
+  }, []);
 
   // ── Core run logic
 
   const handleRun = useCallback(
     async (dryRun: boolean) => {
       if (folders.length === 0) {
-        setBanner({ type: 'error', message: t('errors.noFolders') })
-        return
+        setBanner({ type: "error", message: t("errors.noFolders") });
+        return;
       }
 
       const rawExts = rawExtensions
         .split(/\s+/)
-        .filter((e) => e.startsWith('.'))
+        .filter((e) => e.startsWith("."));
 
-      if (fileType !== 'jpg' && rawExts.length === 0) {
-        setBanner({ type: 'error', message: t('errors.noRawExt') })
-        return
+      if (fileType !== "jpg" && rawExts.length === 0) {
+        setBanner({ type: "error", message: t("errors.noRawExt") });
+        return;
       }
 
-      setStatus('processing')
-      setIsDryRun(dryRun)
-      setBanner(null)
-      setStats({ ok: 0, skip: 0, error: 0 })
-      logRef.current = []
-      setLogEntries([])
+      setStatus("processing");
+      setIsDryRun(dryRun);
+      setBanner(null);
+      setStats({ ok: 0, skip: 0, error: 0 });
+      logRef.current = [];
+      setLogEntries([]);
 
-      addLog({ type: 'section', message: `=== ${dryRun ? 'DRY RUN' : 'PROCESSING'} STARTED ===` })
+      addLog({
+        type: "section",
+        message: `=== ${dryRun ? "DRY RUN" : "PROCESSING"} STARTED ===`,
+      });
 
       try {
         // 1. Scan folders
-        addLog({ type: 'section', message: `Scanning ${folders.length} folder(s)...` })
-        const scanResult = await invoke<ScanResult>('scan_folders', {
+        addLog({
+          type: "section",
+          message: `Scanning ${folders.length} folder(s)...`,
+        });
+        const scanResult = await invoke<ScanResult>("scan_folders", {
           folders,
           rawExts,
           recursive: recursiveScan,
-        })
+        });
 
-        const { stats: s } = scanResult
+        const { stats: s } = scanResult;
         addLog({
-          type: 'section',
+          type: "section",
           message: [
             `Found ${s.total_pairs} groups`,
             `${s.both} paired`,
             `${s.jpg_only} JPG-only`,
             `${s.raw_only} RAW-only`,
-          ].join(' · '),
-        })
+          ].join(" · "),
+        });
 
         if (scanResult.pairs.length === 0) {
-          addLog({ type: 'warn', message: 'No files found in the selected folders.' })
-          setStatus('idle')
-          return
+          addLog({
+            type: "warn",
+            message: "No files found in the selected folders.",
+          });
+          setStatus("idle");
+          return;
         }
 
         // 2. Build rename plan
-        const planResult = await invoke<BuildPlanResult>('build_rename_plan', {
+        const planResult = await invoke<BuildPlanResult>("build_rename_plan", {
           pairs: scanResult.pairs,
           opts: {
             prefix,
@@ -221,39 +290,42 @@ function App() {
             only_paired: onlyPaired,
             start_num: startNumber,
           },
-        })
+        });
 
         if (planResult.skipped_count > 0) {
           addLog({
-            type: 'warn',
+            type: "warn",
             message: `${planResult.skipped_count} group(s) skipped — no readable EXIF data.`,
-          })
+          });
         }
 
         if (planResult.plan.length === 0) {
-          addLog({ type: 'warn', message: 'Nothing to rename.' })
-          setStatus('idle')
-          return
+          addLog({ type: "warn", message: "Nothing to rename." });
+          setStatus("idle");
+          return;
         }
 
-        setProgress({ current: 0, total: planResult.plan.length })
-        addLog({ type: 'section', message: `Renaming ${planResult.plan.length} files...` })
+        setProgress({ current: 0, total: planResult.plan.length });
+        addLog({
+          type: "section",
+          message: `Renaming ${planResult.plan.length} files...`,
+        });
 
         // 3. Listen for progress events before invoking execute_plan
-        const unlisten = await listen<ProgressEvent>('progress', (event) => {
-          const { entry, current, total, stats: es } = event.payload
-          setProgress({ current, total })
-          setStats({ ok: es.ok, skip: es.skip, error: es.error })
+        const unlisten = await listen<ProgressEvent>("progress", (event) => {
+          const { entry, current, total, stats: es } = event.payload;
+          setProgress({ current, total });
+          setStats({ ok: es.ok, skip: es.skip, error: es.error });
           addLog({
-            type: entry.entry_type as LogEntry['type'],
+            type: entry.entry_type as LogEntry["type"],
             source: entry.source,
             destination: entry.destination,
             message: entry.message,
-          })
-        })
+          });
+        });
 
         // 4. Execute
-        const result = await invoke<ExecuteResult>('execute_plan', {
+        const result = await invoke<ExecuteResult>("execute_plan", {
           plan: planResult.plan,
           opts: {
             output_dir: outputFolder.trim() || null,
@@ -261,82 +333,146 @@ function App() {
             use_date_subdir: organizeByDate,
             file_op: fileOperation,
           },
-        })
+        });
 
-        unlisten()
+        unlisten();
 
         if (result.cancelled) {
-          setStatus('stopped')
+          setStatus("stopped");
           setBanner({
-            type: 'warning',
+            type: "warning",
             message: `⏹ Stopped at ${result.ok} / ${planResult.plan.length} files`,
-          })
+          });
         } else {
-          setStatus('complete')
-          addLog({ type: 'section', message: '=== COMPLETED ===' })
-          const msg = `✅ Completed: ${result.ok} file(s) ${dryRun ? 'would be renamed' : 'renamed successfully'}${
-            result.errors ? `, ${result.errors} error(s)` : ''
-          }`
-          setBanner({ type: result.errors > 0 ? 'warning' : 'success', message: msg })
-          setTimeout(() => setBanner(null), 6000)
+          setStatus("complete");
+          addLog({ type: "section", message: "=== COMPLETED ===" });
+          const msg = `✅ Completed: ${result.ok} file(s) ${dryRun ? "would be renamed" : "renamed successfully"}${
+            result.errors ? `, ${result.errors} error(s)` : ""
+          }`;
+          setBanner({
+            type: result.errors > 0 ? "warning" : "success",
+            message: msg,
+          });
+          setTimeout(() => setBanner(null), 6000);
         }
       } catch (e) {
-        setStatus('error')
-        addLog({ type: 'error', message: String(e) })
-        setBanner({ type: 'error', message: `Error: ${e}` })
+        setStatus("error");
+        addLog({ type: "error", message: String(e) });
+        setBanner({ type: "error", message: `Error: ${e}` });
       }
     },
     [
-      folders, rawExtensions, recursiveScan, format, prefix,
-      fileType, onlyPaired, startNumber, outputFolder,
-      organizeByDate, fileOperation, addLog, t,
+      folders,
+      rawExtensions,
+      recursiveScan,
+      format,
+      prefix,
+      fileType,
+      onlyPaired,
+      startNumber,
+      outputFolder,
+      organizeByDate,
+      fileOperation,
+      addLog,
+      t,
     ],
-  )
+  );
 
   const handleStop = useCallback(async () => {
     try {
-      await invoke('cancel_execution')
+      await invoke("cancel_execution");
     } catch (e) {
-      console.error('cancel_execution failed:', e)
+      console.error("cancel_execution failed:", e);
     }
-  }, [])
+  }, []);
 
   const handleClearLog = useCallback(() => {
-    logRef.current = []
-    setLogEntries([])
-    setStats({ ok: 0, skip: 0, error: 0 })
-    setProgress({ current: 0, total: 0 })
-    setBanner(null)
-    if (status === 'complete' || status === 'stopped' || status === 'error') {
-      setStatus('idle')
+    logRef.current = [];
+    setLogEntries([]);
+    setStats({ ok: 0, skip: 0, error: 0 });
+    setProgress({ current: 0, total: 0 });
+    setBanner(null);
+    if (status === "complete" || status === "stopped" || status === "error") {
+      setStatus("idle");
     }
-  }, [status])
+  }, [status]);
 
   // ── Language toggle
-  const handleLanguageChange = useCallback((lang: string) => {
-    i18n.changeLanguage(lang)
+  const handleLanguageChange = useCallback(
+    (lang: string) => {
+      i18n.changeLanguage(lang);
+      try {
+        localStorage.setItem("lightops-language", lang);
+      } catch {
+        /* ignore */
+      }
+    },
+    [i18n],
+  );
+
+  // ── Settings defaults (save to localStorage)
+  const handleDefaultCameraChange = useCallback((v: string) => {
+    setDefaultCamera(v);
     try {
-      localStorage.setItem('lightops-language', lang)
-    } catch { /* ignore */ }
-  }, [i18n])
+      localStorage.setItem(STORAGE.camera, v);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleDefaultFileOperationChange = useCallback((v: "copy" | "move") => {
+    setDefaultFileOperation(v);
+    try {
+      localStorage.setItem(STORAGE.fileOp, v);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleDefaultRecursiveScanChange = useCallback((v: boolean) => {
+    setDefaultRecursiveScan(v);
+    try {
+      localStorage.setItem(STORAGE.recursive, String(v));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const handleDefaultOrganizeByDateChange = useCallback((v: boolean) => {
+    setDefaultOrganizeByDate(v);
+    try {
+      localStorage.setItem(STORAGE.organize, String(v));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // ── Decorative gradient orbs
   const gradientOrbs = [
     {
-      gradient: 'radial-gradient(circle, rgba(102, 126, 234, 0.15), transparent 70%)',
-      size: '600px', top: '10%', left: '15%',
+      gradient:
+        "radial-gradient(circle, rgba(102, 126, 234, 0.15), transparent 70%)",
+      size: "600px",
+      top: "10%",
+      left: "15%",
     },
     {
-      gradient: 'radial-gradient(circle, rgba(217, 70, 239, 0.12), transparent 70%)',
-      size: '500px', top: '50%', right: '10%',
+      gradient:
+        "radial-gradient(circle, rgba(217, 70, 239, 0.12), transparent 70%)",
+      size: "500px",
+      top: "50%",
+      right: "10%",
     },
     {
-      gradient: 'radial-gradient(circle, rgba(79, 172, 254, 0.1), transparent 70%)',
-      size: '450px', bottom: '15%', left: '20%',
+      gradient:
+        "radial-gradient(circle, rgba(79, 172, 254, 0.1), transparent 70%)",
+      size: "450px",
+      bottom: "15%",
+      left: "20%",
     },
-  ]
+  ];
 
-  const isProcessing = status === 'processing'
+  const isProcessing = status === "processing";
 
   return (
     <div className="h-screen flex flex-col overflow-hidden relative">
@@ -347,14 +483,20 @@ function App() {
           className="absolute rounded-full pointer-events-none"
           style={{
             background: orb.gradient,
-            width: orb.size, height: orb.size,
-            top: orb.top, left: orb.left,
+            width: orb.size,
+            height: orb.size,
+            top: orb.top,
+            left: orb.left,
             right: (orb as Record<string, string>).right,
             bottom: (orb as Record<string, string>).bottom,
-            filter: 'blur(80px)',
+            filter: "blur(80px)",
           }}
           animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 8 + index * 2, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{
+            duration: 8 + index * 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
         />
       ))}
 
@@ -362,14 +504,21 @@ function App() {
       <TitleBar
         onSettingsClick={() => setIsSettingsOpen(true)}
         updateInfo={updateInfo}
+        language={i18n.language}
+        onLanguageChange={handleLanguageChange}
       />
 
       {/* Update notification banner */}
       {updateInfo?.available && (
-        <div className="px-4 py-2 text-sm flex items-center justify-between"
-          style={{ background: 'rgba(102,126,234,0.15)', borderBottom: '1px solid rgba(102,126,234,0.3)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>
-            {t('update.available')} v{updateInfo.version}
+        <div
+          className="px-4 py-2 text-sm flex items-center justify-between"
+          style={{
+            background: "rgba(102,126,234,0.15)",
+            borderBottom: "1px solid rgba(102,126,234,0.3)",
+          }}
+        >
+          <span style={{ color: "var(--text-secondary)" }}>
+            {t("update.available")} v{updateInfo.version}
           </span>
         </div>
       )}
@@ -378,35 +527,46 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel — Configuration */}
         <div
-          className="w-[400px] flex flex-col gap-3 overflow-y-auto p-4"
-          style={{ borderRight: '1px solid var(--glass-divider)' }}
+          className="w-[900px] flex flex-col gap-3 overflow-y-auto p-4"
+          style={{ borderRight: "1px solid var(--glass-divider)" }}
         >
-          <SourceFoldersPanel
-            folders={folders}
-            onAddFolder={handleAddFolder}
-            onRemoveFolder={handleRemoveFolder}
-          />
-          <OutputFolderPanel
-            outputFolder={outputFolder}
-            onBrowse={handleBrowseOutput}
-            onChange={setOutputFolder}
-          />
-          <CameraFormatPanel
-            cameraPreset={cameraPreset}
-            rawExtensions={rawExtensions}
-            fileType={fileType}
-            onCameraChange={setCameraPreset}
-            onRawExtensionsChange={setRawExtensions}
-            onFileTypeChange={setFileType}
-          />
-          <RenameSettingsPanel
-            prefix={prefix}
-            format={format}
-            startNumber={startNumber}
-            onPrefixChange={setPrefix}
-            onFormatChange={setFormat}
-            onStartNumberChange={setStartNumber}
-          />
+          {/* 2-column grid: Col1 = Source+Output, Col2 = Camera+Rename */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Column 1 */}
+            <div className="flex flex-col gap-3">
+              <SourceFoldersPanel
+                folders={folders}
+                onAddFolder={handleAddFolder}
+                onRemoveFolder={handleRemoveFolder}
+              />
+              <OutputFolderPanel
+                outputFolder={outputFolder}
+                onBrowse={handleBrowseOutput}
+                onChange={setOutputFolder}
+              />
+            </div>
+            {/* Column 2 */}
+            <div className="flex flex-col gap-3">
+              <CameraFormatPanel
+                cameraPreset={cameraPreset}
+                rawExtensions={rawExtensions}
+                fileType={fileType}
+                onCameraChange={setCameraPreset}
+                onRawExtensionsChange={setRawExtensions}
+                onFileTypeChange={setFileType}
+              />
+              <RenameSettingsPanel
+                prefix={prefix}
+                format={format}
+                startNumber={startNumber}
+                onPrefixChange={setPrefix}
+                onFormatChange={setFormat}
+                onStartNumberChange={setStartNumber}
+              />
+            </div>
+          </div>
+
+          {/* Advanced options — always visible */}
           <AdvancedOptionsPanel
             recursiveScan={recursiveScan}
             fileOperation={fileOperation}
@@ -433,22 +593,41 @@ function App() {
               exit={{ opacity: 0 }}
               className="rounded-xl p-3 flex items-center gap-2 text-sm border"
               style={{
-                background: banner.type === 'success'
-                  ? 'rgba(17, 153, 142, 0.15)'
-                  : banner.type === 'warning'
-                  ? 'rgba(247, 151, 30, 0.15)'
-                  : 'rgba(245, 87, 108, 0.15)',
-                borderColor: banner.type === 'success'
-                  ? 'rgba(17, 153, 142, 0.3)'
-                  : banner.type === 'warning'
-                  ? 'rgba(247, 151, 30, 0.3)'
-                  : 'rgba(245, 87, 108, 0.3)',
+                background:
+                  banner.type === "success"
+                    ? "rgba(17, 153, 142, 0.15)"
+                    : banner.type === "warning"
+                      ? "rgba(247, 151, 30, 0.15)"
+                      : "rgba(245, 87, 108, 0.15)",
+                borderColor:
+                  banner.type === "success"
+                    ? "rgba(17, 153, 142, 0.3)"
+                    : banner.type === "warning"
+                      ? "rgba(247, 151, 30, 0.3)"
+                      : "rgba(245, 87, 108, 0.3)",
               }}
             >
-              {banner.type === 'success' && <CheckCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--log-ok)' }} />}
-              {banner.type === 'warning' && <AlertTriangle className="w-4 h-4 shrink-0" style={{ color: 'var(--log-warn)' }} />}
-              {banner.type === 'error' && <AlertCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--log-error)' }} />}
-              <span style={{ color: 'var(--text-secondary)' }}>{banner.message}</span>
+              {banner.type === "success" && (
+                <CheckCircle
+                  className="w-4 h-4 shrink-0"
+                  style={{ color: "var(--log-ok)" }}
+                />
+              )}
+              {banner.type === "warning" && (
+                <AlertTriangle
+                  className="w-4 h-4 shrink-0"
+                  style={{ color: "var(--log-warn)" }}
+                />
+              )}
+              {banner.type === "error" && (
+                <AlertCircle
+                  className="w-4 h-4 shrink-0"
+                  style={{ color: "var(--log-error)" }}
+                />
+              )}
+              <span style={{ color: "var(--text-secondary)" }}>
+                {banner.message}
+              </span>
             </motion.div>
           )}
         </div>
@@ -480,14 +659,14 @@ function App() {
         defaultRecursiveScan={defaultRecursiveScan}
         defaultOrganizeByDate={defaultOrganizeByDate}
         language={i18n.language}
-        onDefaultCameraChange={setDefaultCamera}
-        onDefaultFileOperationChange={setDefaultFileOperation}
-        onDefaultRecursiveScanChange={setDefaultRecursiveScan}
-        onDefaultOrganizeByDateChange={setDefaultOrganizeByDate}
+        onDefaultCameraChange={handleDefaultCameraChange}
+        onDefaultFileOperationChange={handleDefaultFileOperationChange}
+        onDefaultRecursiveScanChange={handleDefaultRecursiveScanChange}
+        onDefaultOrganizeByDateChange={handleDefaultOrganizeByDateChange}
         onLanguageChange={handleLanguageChange}
       />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

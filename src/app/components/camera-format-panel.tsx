@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CameraFormatPanelProps {
   cameraPreset: string;
@@ -29,6 +30,7 @@ export function CameraFormatPanel({
   onRawExtensionsChange,
   onFileTypeChange
 }: CameraFormatPanelProps) {
+  const { t } = useTranslation();
   return (
     <div 
       className="rounded-2xl p-4 backdrop-blur-lg border"
@@ -40,14 +42,14 @@ export function CameraFormatPanel({
     >
       <div className="mb-3">
         <h2 className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-          CAMERA & FORMAT
+          {t('cameraFormat.title')}
         </h2>
       </div>
       
       <div className="space-y-2.5">
         <div>
           <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-            Camera Preset
+            {t('cameraFormat.preset')}
           </label>
           <div className="relative">
             <select
@@ -67,7 +69,7 @@ export function CameraFormatPanel({
               }}
             >
               {CAMERA_PRESETS.map(preset => (
-                <option key={preset.value} value={preset.value}>
+                <option key={preset.value} value={preset.value} className="bg-[#1a1535]">
                   {preset.label}
                 </option>
               ))}
@@ -78,13 +80,13 @@ export function CameraFormatPanel({
         
         <div>
           <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-            RAW Extensions
+            {t('cameraFormat.rawExtensions')}
           </label>
           <input
             type="text"
             value={rawExtensions}
             onChange={(e) => onRawExtensionsChange(e.target.value)}
-            placeholder=".nef .nrw"
+            placeholder={t('cameraFormat.rawPlaceholder')}
             className="w-full px-3 py-2 rounded-lg border backdrop-blur-sm text-sm"
             style={{
               background: 'var(--input-background)',
@@ -96,17 +98,17 @@ export function CameraFormatPanel({
         
         <div>
           <label className="block text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-            File Type
+            {t('cameraFormat.fileType')}
           </label>
           <div className="flex gap-2">
-            {[
-              { value: 'both', label: 'JPG + RAW' },
-              { value: 'jpg', label: 'JPG only' },
-              { value: 'raw', label: 'RAW only' }
-            ].map(option => (
+            {([
+              { value: 'both', key: 'cameraFormat.fileTypes.both' },
+              { value: 'jpg', key: 'cameraFormat.fileTypes.jpg' },
+              { value: 'raw', key: 'cameraFormat.fileTypes.raw' }
+            ] as const).map(option => (
               <button
                 key={option.value}
-                onClick={() => onFileTypeChange(option.value as 'both' | 'jpg' | 'raw')}
+                onClick={() => onFileTypeChange(option.value)}
                 className="flex-1 px-3 py-2 rounded-full text-xs transition-all"
                 style={{
                   background: fileType === option.value ? 'var(--accent-lightops)' : 'var(--input-background)',
@@ -115,7 +117,7 @@ export function CameraFormatPanel({
                   border: fileType === option.value ? 'none' : '1px solid'
                 }}
               >
-                {option.label}
+                {t(option.key)}
               </button>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { FolderOpen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface OutputFolderPanelProps {
   outputFolder: string;
@@ -7,6 +8,7 @@ interface OutputFolderPanelProps {
 }
 
 export function OutputFolderPanel({ outputFolder, onBrowse, onChange }: OutputFolderPanelProps) {
+  const { t } = useTranslation();
   return (
     <div 
       className="rounded-2xl p-4 backdrop-blur-lg border"
@@ -18,10 +20,10 @@ export function OutputFolderPanel({ outputFolder, onBrowse, onChange }: OutputFo
     >
       <div className="mb-3">
         <h2 className="text-white mb-0.5" style={{ fontFamily: 'var(--font-heading)' }}>
-          OUTPUT FOLDER
+          {t('outputFolder.title')}
         </h2>
         <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          Leave empty to rename in-place
+          {t('outputFolder.subtitle')}
         </p>
       </div>
       
@@ -30,7 +32,7 @@ export function OutputFolderPanel({ outputFolder, onBrowse, onChange }: OutputFo
           type="text"
           value={outputFolder}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="/path/to/output"
+          placeholder={t('outputFolder.placeholder')}
           className="flex-1 px-3 py-2 rounded-lg border backdrop-blur-sm text-sm"
           style={{
             background: 'var(--input-background)',
@@ -47,13 +49,13 @@ export function OutputFolderPanel({ outputFolder, onBrowse, onChange }: OutputFo
           }}
         >
           <FolderOpen className="w-4 h-4" />
-          <span className="text-sm">Browse</span>
+          <span className="text-sm">{t('outputFolder.browse')}</span>
         </button>
       </div>
       
       <div className="mt-3 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
         <span>📁</span>
-        <span>Files will be copied/moved here</span>
+        <span>{t('outputFolder.hint')}</span>
       </div>
     </div>
   );

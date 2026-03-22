@@ -1,6 +1,7 @@
 import { Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface LogEntry {
   type: 'ok' | 'dry' | 'skip' | 'error' | 'warn' | 'section';
@@ -17,6 +18,7 @@ interface LogPanelProps {
 }
 
 export function LogPanel({ entries, isDryRun, stats, onClear }: LogPanelProps) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const isUserScrolling = useRef(false);
 
@@ -62,13 +64,13 @@ export function LogPanel({ entries, isDryRun, stats, onClear }: LogPanelProps) {
     >
       <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--glass-divider)' }}>
         <div className="flex items-center gap-3">
-          <h2 className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>LOG OUTPUT</h2>
+          <h2 className="text-white" style={{ fontFamily: 'var(--font-heading)' }}>{t('log.title')}</h2>
           {isDryRun && (
             <span 
               className="px-2.5 py-1 rounded-full text-xs font-medium"
               style={{ background: 'rgba(255, 210, 0, 0.1)', color: 'var(--log-skip)', border: '1px solid rgba(255, 210, 0, 0.3)' }}
             >
-              DRY RUN
+              {t('log.dryRunBadge')}
             </span>
           )}
         </div>
@@ -79,7 +81,7 @@ export function LogPanel({ entries, isDryRun, stats, onClear }: LogPanelProps) {
             <span style={{ color: 'var(--log-error)' }}>❌ {stats.error}</span>
           </div>
           <button onClick={onClear} className="text-xs hover:bg-white/5 px-2 py-1 rounded transition-colors" style={{ color: 'var(--text-muted)' }}>
-            Clear
+            {t('log.clear')}
           </button>
         </div>
       </div>
@@ -93,7 +95,7 @@ export function LogPanel({ entries, isDryRun, stats, onClear }: LogPanelProps) {
         {entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
             <Camera className="w-12 h-12 mb-3" style={{ color: 'var(--text-muted)' }} />
-            <p style={{ color: 'var(--text-muted)' }}>Ready. Configure settings and press Run or Dry Run.</p>
+            <p style={{ color: 'var(--text-muted)' }}>{t('log.empty')}</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>

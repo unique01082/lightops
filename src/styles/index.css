@@ -1,6 +1,6 @@
-@import './fonts.css';
-@import './tailwind.css';
-@import './theme.css';
+@import "./fonts.css";
+@import "./tailwind.css";
+@import "./theme.css";
 
 /* Custom scrollbar styles for dark theme */
 * {
@@ -27,17 +27,37 @@
 }
 
 /* Global dark background */
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   background: var(--bg-gradient);
   color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-user-select: none;
   user-select: none;
+  /* Hardware acceleration for smoother rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Promote composited layers for animated elements */
+.transition-colors,
+.transition-all,
+.transition {
+  will-change: auto;
+}
+
+/* Prevent layout thrash on interactive elements */
+button,
+[role="button"] {
+  cursor: default;
 }
 
 /* Allow text selection in log and inputs */
-input, textarea, [data-selectable] {
+input,
+textarea,
+[data-selectable] {
   -webkit-user-select: text;
   user-select: text;
 }

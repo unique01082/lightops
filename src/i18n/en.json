@@ -32,7 +32,7 @@
   "renameSettings": {
     "title": "RENAME SETTINGS",
     "prefix": "Prefix",
-    "prefixPlaceholder": "e.g. hanoi_",
+    "prefixPlaceholder": "e.g. IMG_",
     "format": "Filename Format",
     "startNumber": "Start #",
     "preview": "Preview",
