@@ -1,0 +1,90 @@
+{
+  "app": {
+    "name": "LightOps",
+    "tagline": "Every frame, perfectly named."
+  },
+  "sourceFolders": {
+    "title": "SOURCE FOLDERS",
+    "subtitle": "Supports multiple cards / cameras",
+    "empty": "Drop folders here or click to browse",
+    "addButton": "Add Folder",
+    "removeTooltip": "Remove"
+  },
+  "outputFolder": {
+    "title": "OUTPUT FOLDER",
+    "subtitle": "Leave empty to rename in-place",
+    "browse": "Browse",
+    "placeholder": "/path/to/output",
+    "hint": "Files will be copied / moved here"
+  },
+  "cameraFormat": {
+    "title": "CAMERA & FORMAT",
+    "preset": "Camera Preset",
+    "rawExtensions": "RAW Extensions",
+    "rawPlaceholder": ".nef .nrw",
+    "fileType": "File Type",
+    "fileTypes": {
+      "both": "JPG + RAW",
+      "jpg": "JPG only",
+      "raw": "RAW only"
+    }
+  },
+  "renameSettings": {
+    "title": "RENAME SETTINGS",
+    "prefix": "Prefix",
+    "prefixPlaceholder": "e.g. hanoi_",
+    "format": "Filename Format",
+    "startNumber": "Start #",
+    "preview": "Preview",
+    "patterns": {
+      "YYYYMMDD_HHMMSS_NNNN": "YYYYMMDD_HHMMSS_NNNN",
+      "YYYY-MM-DD_HH-MM-SS_NNNN": "YYYY-MM-DD_HH-MM-SS_NNNN",
+      "YYYYMMDD_NNNN": "YYYYMMDD_NNNN (date only)",
+      "NNNN": "NNNN only (no date/time)"
+    }
+  },
+  "advanced": {
+    "title": "ADVANCED",
+    "recursive": "Scan subfolders recursively",
+    "fileOp": "File Operation",
+    "copy": "Copy (keep originals)",
+    "move": "Move (delete originals)",
+    "moveWarning": "Original files will be deleted",
+    "organizeByDate": "Create YYYY-MM-DD/ subfolders in output",
+    "onlyPaired": "Skip unpaired JPG or RAW"
+  },
+  "actions": {
+    "run": "Run",
+    "dryRun": "Dry Run",
+    "stop": "Stop"
+  },
+  "log": {
+    "title": "LOG OUTPUT",
+    "clear": "Clear",
+    "empty": "Ready. Configure settings and press Run or Dry Run.",
+    "dryRunBadge": "DRY RUN"
+  },
+  "status": {
+    "ready": "Ready",
+    "processing": "Processing…",
+    "complete": "Complete",
+    "stopped": "Stopped",
+    "scanning": "Scanning…"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "defaultCamera": "Default Camera Preset",
+    "defaultFileOp": "Default File Operation",
+    "defaultRecursive": "Recursive scan by default",
+    "defaultOrganize": "Organize by date by default"
+  },
+  "update": {
+    "available": "Update available",
+    "install": "Install & Restart"
+  },
+  "errors": {
+    "noFolders": "Please add at least one source folder.",
+    "noRawExt": "Please enter RAW extensions (e.g. .nef .nrw)"
+  }
+}

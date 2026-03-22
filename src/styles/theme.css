@@ -1,0 +1,91 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* LightOps baole.space Design System */
+
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --bg-gradient: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+
+  --accent-primary: linear-gradient(135deg, #667eea, #764ba2);
+  --accent-secondary: linear-gradient(135deg, #f093fb, #f5576c);
+  --accent-tertiary: linear-gradient(135deg, #4facfe, #00f2fe);
+  --accent-success: linear-gradient(135deg, #11998e, #38ef7d);
+  --accent-warning: linear-gradient(135deg, #f7971e, #ffd200);
+  --accent-danger: linear-gradient(135deg, #f5576c, #f093fb);
+  --accent-lightops: linear-gradient(135deg, #8b5cf6, #d946ef);
+
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-divider: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.70);
+  --text-muted: rgba(255, 255, 255, 0.45);
+
+  --log-ok: #38ef7d;
+  --log-dry: #aaaaaa;
+  --log-skip: #ffd200;
+  --log-error: #f5576c;
+  --log-warn: #f7971e;
+  --log-bg: rgba(0, 0, 0, 0.4);
+  --titlebar-bg: rgba(0, 0, 0, 0.3);
+
+  /* Shadcn/Radix compatibility vars */
+  --font-size: 16px;
+  --background: #0f0c29;
+  --foreground: #ffffff;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-foreground: #ffffff;
+  --popover: rgba(255, 255, 255, 0.05);
+  --popover-foreground: #ffffff;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(255, 255, 255, 0.10);
+  --secondary-foreground: #ffffff;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: rgba(255, 255, 255, 0.45);
+  --accent: #d946ef;
+  --accent-foreground: #ffffff;
+  --destructive: #f5576c;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.10);
+  --input: transparent;
+  --input-background: rgba(255, 255, 255, 0.05);
+  --switch-background: rgba(255, 255, 255, 0.20);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: rgba(139, 92, 246, 0.5);
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --font-weight-medium: var(--font-weight-medium);
+  --font-weight-normal: var(--font-weight-normal);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}

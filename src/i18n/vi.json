@@ -1,0 +1,90 @@
+{
+  "app": {
+    "name": "LightOps",
+    "tagline": "Mỗi khung hình, được đặt tên hoàn hảo."
+  },
+  "sourceFolders": {
+    "title": "THƯ MỤC NGUỒN",
+    "subtitle": "Hỗ trợ nhiều thẻ nhớ / nhiều máy ảnh",
+    "empty": "Thả thư mục vào đây hoặc nhấn để duyệt",
+    "addButton": "Thêm thư mục",
+    "removeTooltip": "Xóa"
+  },
+  "outputFolder": {
+    "title": "THƯ MỤC ĐÍCH",
+    "subtitle": "Để trống = đổi tên tại chỗ",
+    "browse": "Duyệt…",
+    "placeholder": "/đường/dẫn/đích",
+    "hint": "File sẽ được sao chép / di chuyển tới đây"
+  },
+  "cameraFormat": {
+    "title": "LOẠI MÁY & ĐỊNH DẠNG",
+    "preset": "Loại máy ảnh",
+    "rawExtensions": "Phần mở rộng RAW",
+    "rawPlaceholder": ".nef .nrw",
+    "fileType": "Loại file",
+    "fileTypes": {
+      "both": "JPG + RAW",
+      "jpg": "Chỉ JPG",
+      "raw": "Chỉ RAW"
+    }
+  },
+  "renameSettings": {
+    "title": "ĐẶT TÊN FILE",
+    "prefix": "Tiền tố",
+    "prefixPlaceholder": "vd: hanoi_",
+    "format": "Định dạng tên",
+    "startNumber": "Số bắt đầu",
+    "preview": "Xem trước",
+    "patterns": {
+      "YYYYMMDD_HHMMSS_NNNN": "YYYYMMDD_HHMMSS_NNNN",
+      "YYYY-MM-DD_HH-MM-SS_NNNN": "YYYY-MM-DD_HH-MM-SS_NNNN",
+      "YYYYMMDD_NNNN": "YYYYMMDD_NNNN (chỉ ngày)",
+      "NNNN": "Chỉ số thứ tự NNNN (không ngày/giờ)"
+    }
+  },
+  "advanced": {
+    "title": "NÂNG CAO",
+    "recursive": "Quét đệ quy thư mục con",
+    "fileOp": "Kiểu xử lý file",
+    "copy": "Copy (giữ nguyên file gốc)",
+    "move": "Move (di chuyển, xóa gốc)",
+    "moveWarning": "File gốc sẽ bị xóa",
+    "organizeByDate": "Tạo thư mục con YYYY-MM-DD/ trong đích",
+    "onlyPaired": "Bỏ qua file lẻ (chỉ cặp JPG+RAW)"
+  },
+  "actions": {
+    "run": "Chạy",
+    "dryRun": "Thử nghiệm",
+    "stop": "Dừng"
+  },
+  "log": {
+    "title": "LOG",
+    "clear": "Xóa log",
+    "empty": "Sẵn sàng. Cấu hình xong rồi nhấn Chạy hoặc Thử nghiệm.",
+    "dryRunBadge": "THỬ NGHIỆM"
+  },
+  "status": {
+    "ready": "Sẵn sàng",
+    "processing": "Đang xử lý…",
+    "complete": "Hoàn thành",
+    "stopped": "Đã dừng",
+    "scanning": "Đang quét…"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "language": "Ngôn ngữ",
+    "defaultCamera": "Loại máy mặc định",
+    "defaultFileOp": "Kiểu xử lý mặc định",
+    "defaultRecursive": "Quét đệ quy mặc định",
+    "defaultOrganize": "Sắp xếp theo ngày mặc định"
+  },
+  "update": {
+    "available": "Có bản cập nhật",
+    "install": "Cài đặt & Khởi động lại"
+  },
+  "errors": {
+    "noFolders": "Vui lòng thêm ít nhất một thư mục nguồn.",
+    "noRawExt": "Vui lòng nhập phần mở rộng RAW (vd: .nef .nrw)"
+  }
+}
