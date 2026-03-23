@@ -5,11 +5,13 @@ use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 const JPG_EXTS: &[&str] = &[".jpg", ".jpeg"];
+const VIDEO_EXTS: &[&str] = &[".mp4", ".mov", ".mts", ".m4v", ".avi", ".mkv", ".3gp"];
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FilePair {
     pub jpg: Option<String>,
     pub raw: Option<String>,
+    pub video: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,6 +20,7 @@ pub struct ScanStats {
     pub both: usize,
     pub jpg_only: usize,
     pub raw_only: usize,
+    pub video_count: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,6 +38,7 @@ pub fn scan_folders(
     folders: Vec<String>,
     raw_exts: Vec<String>,
     recursive: bool,
+    include_video: bool,
 ) -> Result<ScanResult, String> {
     let raw_exts_lower: Vec<String> = raw_exts
         .iter()
@@ -73,8 +77,9 @@ pub fn scan_folders(
 
             let is_jpg = JPG_EXTS.contains(&ext.as_str());
             let is_raw = raw_exts_lower.contains(&ext);
+            let is_video = include_video && VIDEO_EXTS.contains(&ext.as_str());
 
-            if !is_jpg && !is_raw {
+            if !is_jpg && !is_raw && !is_video {
                 continue;
             }
 
@@ -90,12 +95,14 @@ pub fn scan_folders(
 
             let pair = pairs
                 .entry((parent, stem))
-                .or_insert(FilePair { jpg: None, raw: None });
+                .or_insert(FilePair { jpg: None, raw: None, video: None });
 
             if is_jpg {
                 pair.jpg = Some(path.to_string_lossy().into_owned());
-            } else {
+            } else if is_raw {
                 pair.raw = Some(path.to_string_lossy().into_owned());
+            } else if is_video {
+                pair.video = Some(path.to_string_lossy().into_owned());
             }
         }
     }
@@ -105,6 +112,7 @@ pub fn scan_folders(
     let mut both = 0usize;
     let mut jpg_only = 0usize;
     let mut raw_only = 0usize;
+    let mut video_count = 0usize;
 
     for p in &pairs_vec {
         match (&p.jpg, &p.raw) {
@@ -112,6 +120,9 @@ pub fn scan_folders(
             (Some(_), None) => jpg_only += 1,
             (None, Some(_)) => raw_only += 1,
             _ => {}
+        }
+        if p.video.is_some() {
+            video_count += 1;
         }
     }
 
@@ -121,6 +132,7 @@ pub fn scan_folders(
             both,
             jpg_only,
             raw_only,
+            video_count,
         },
         pairs: pairs_vec,
     })

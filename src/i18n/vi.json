@@ -51,7 +51,8 @@
     "move": "Move (di chuyển, xóa gốc)",
     "moveWarning": "File gốc sẽ bị xóa",
     "organizeByDate": "Tạo thư mục con YYYY-MM-DD/ trong đích",
-    "onlyPaired": "Bỏ qua file lẻ (chỉ cặp JPG+RAW)"
+    "onlyPaired": "Bỏ qua file lẻ (chỉ cặp JPG+RAW)",
+    "includeVideo": "Bao gồm file video (.mp4, .mov, .mts)"
   },
   "actions": {
     "run": "Chạy",
@@ -62,7 +63,12 @@
     "title": "LOG",
     "clear": "Xóa log",
     "empty": "Sẵn sàng. Cấu hình xong rồi nhấn Chạy hoặc Thử nghiệm.",
-    "dryRunBadge": "THỬ NGHIỆM"
+    "dryRunBadge": "THỬ NGHIỆM",
+    "viewText": "Dạng văn bản",
+    "viewTable": "Dạng bảng",
+    "tableStatus": "TRẠNG THÁI",
+    "tableSource": "NGUỒN",
+    "tableDestination": "ĐÍCH"
   },
   "status": {
     "ready": "Sẵn sàng",
@@ -91,5 +97,15 @@
   "errors": {
     "noFolders": "Vui lòng thêm ít nhất một thư mục nguồn.",
     "noRawExt": "Vui lòng nhập phần mở rộng RAW (vd: .nef .nrw)"
+  },
+  "presets": {
+    "title": "PRESET",
+    "save": "Lưu…",
+    "saveTooltip": "Lưu cấu hình hiện tại thành preset",
+    "apply": "Áp dụng",
+    "deleteTooltip": "Xóa preset",
+    "empty": "Chưa có preset. Cấu hình xong rồi nhấn Lưu…",
+    "selectPlaceholder": "Chọn một preset…",
+    "namePlaceholder": "Tên preset (vd: Sony Wedding A7IV)"
   }
 }

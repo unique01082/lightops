@@ -10,7 +10,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
 
-use super::exif::get_exif_datetime;
+use super::exif::{get_exif_datetime, get_video_datetime};
 use super::scan::FilePair;
 
 // ── Shared cancel flag ───────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ pub struct RenameOptions {
     pub file_mode: String,
     pub only_paired: bool,
     pub start_num: u32,
+    pub include_video: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -104,19 +105,35 @@ pub fn build_rename_plan(
     for pair in pairs {
         let has_jpg = pair.jpg.is_some();
         let has_raw = pair.raw.is_some();
+        let has_video = pair.video.is_some();
 
-        // Filter by file_mode
-        if opts.file_mode == "jpg" && !has_jpg {
-            continue;
-        }
-        if opts.file_mode == "raw" && !has_raw {
-            continue;
-        }
-        if opts.only_paired && !(has_jpg && has_raw) {
+        // A pair with only video and no still images: handle separately
+        let is_video_only = !has_jpg && !has_raw && has_video;
+
+        if !is_video_only {
+            // Filter by file_mode (applies to still images)
+            if opts.file_mode == "jpg" && !has_jpg {
+                // Skip if no jpg, but keep if video is present and include_video
+                if !opts.include_video || !has_video {
+                    continue;
+                }
+            }
+            if opts.file_mode == "raw" && !has_raw {
+                if !opts.include_video || !has_video {
+                    continue;
+                }
+            }
+            if opts.only_paired && !(has_jpg && has_raw) {
+                // only_paired applies to still images; video is always standalone
+                if !opts.include_video || !has_video {
+                    continue;
+                }
+            }
+        } else if !opts.include_video {
             continue;
         }
 
-        // Prefer RAW for EXIF, fall back to JPG
+        // Prefer RAW for EXIF, fall back to JPG, then video mtime
         let ts = pair
             .raw
             .as_deref()
@@ -125,6 +142,15 @@ pub fn build_rename_plan(
                 pair.jpg
                     .as_deref()
                     .and_then(|p| get_exif_datetime(Path::new(p)))
+            })
+            .or_else(|| {
+                if opts.include_video {
+                    pair.video
+                        .as_deref()
+                        .and_then(|p| get_video_datetime(Path::new(p)))
+                } else {
+                    None
+                }
             });
 
         match ts {
@@ -177,6 +203,22 @@ pub fn build_rename_plan(
 
                 plan.push(RenameEntry {
                     old_path: filepath.clone(),
+                    new_name: format!("{}{}", base, ext),
+                    ts: Some(ts_iso.clone()),
+                });
+            }
+        }
+
+        // Video files are processed independently of file_mode
+        if opts.include_video {
+            if let Some(video_path) = &files.video {
+                let ext = Path::new(video_path)
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| format!(".{}", e))
+                    .unwrap_or_default();
+                plan.push(RenameEntry {
+                    old_path: video_path.clone(),
                     new_name: format!("{}{}", base, ext),
                     ts: Some(ts_iso.clone()),
                 });

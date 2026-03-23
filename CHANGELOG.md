@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-beta] - 2026-03-23
+
+### Added
+
+- **Video Support** — Scan and rename companion video files (`.mp4`, `.mov`, `.mts`, `.m4v`, `.avi`, `.mkv`, `.3gp`) alongside photos; toggle via "Include video files" in Advanced Options
+- **Preset Manager** — Save, load and delete named configuration presets stored as JSON in app data directory; apply a preset to restore all settings at once
+- **Log table mode** — Toggle the log panel between text and table view; table mode shows STATUS / SOURCE / DESTINATION columns with clickable paths that open the containing folder in the OS file manager
+- Shell plugin integration (`tauri-plugin-shell`) to open folders from the log panel
+
 ## [0.1.1] - 2026-03-23
 
 ### Fixed

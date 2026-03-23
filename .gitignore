@@ -30,3 +30,4 @@ Thumbs.db
 
 # Tauri
 /src-tauri/WixTools/
+/ref

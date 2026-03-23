@@ -1,6 +1,6 @@
 {
   "name": "lightops",
-  "version": "0.1.1",
+  "version": "1.0.0-beta",
   "private": true,
   "type": "module",
   "scripts": {
@@ -43,6 +43,7 @@
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
     "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-updater": "^2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

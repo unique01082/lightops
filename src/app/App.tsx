@@ -12,6 +12,7 @@ import { ActionButtons } from "./components/action-buttons";
 import { ProgressBar } from "./components/progress-bar";
 import { LogPanel, LogEntry } from "./components/log-panel";
 import { SettingsModal } from "./components/settings-modal";
+import { PresetPanel, Preset } from "./components/preset-panel";
 import { motion } from "motion/react";
 import { CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 
@@ -20,6 +21,7 @@ import { CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 interface FilePair {
   jpg?: string;
   raw?: string;
+  video?: string;
 }
 
 interface ScanResult {
@@ -29,6 +31,7 @@ interface ScanResult {
     both: number;
     jpg_only: number;
     raw_only: number;
+    video_count: number;
   };
 }
 
@@ -158,6 +161,7 @@ function App() {
   );
   const [organizeByDate, setOrganizeByDate] = useState(defaults.organize);
   const [onlyPaired, setOnlyPaired] = useState(false);
+  const [includeVideo, setIncludeVideo] = useState(false);
 
   // Processing state
   const [status, setStatus] = useState<AppStatus>("idle");
@@ -258,6 +262,7 @@ function App() {
           folders,
           rawExts,
           recursive: recursiveScan,
+          includeVideo,
         });
 
         const { stats: s } = scanResult;
@@ -268,6 +273,7 @@ function App() {
             `${s.both} paired`,
             `${s.jpg_only} JPG-only`,
             `${s.raw_only} RAW-only`,
+            ...(s.video_count > 0 ? [`${s.video_count} video`] : []),
           ].join(" · "),
         });
 
@@ -289,6 +295,7 @@ function App() {
             file_mode: fileType,
             only_paired: onlyPaired,
             start_num: startNumber,
+            include_video: includeVideo,
           },
         });
 
@@ -369,6 +376,7 @@ function App() {
       prefix,
       fileType,
       onlyPaired,
+      includeVideo,
       startNumber,
       outputFolder,
       organizeByDate,
@@ -384,6 +392,25 @@ function App() {
     } catch (e) {
       console.error("cancel_execution failed:", e);
     }
+  }, []);
+
+  const handleApplyPreset = useCallback((preset: Preset) => {
+    setCameraPreset(preset.camera_preset);
+    setRawExtensions(preset.raw_extensions);
+    setFileType(preset.file_type);
+    setPrefix(preset.prefix);
+    // Find the format key from the strftime pattern
+    const fmtKey =
+      Object.entries(FORMAT_TO_STRFTIME).find(
+        ([, v]) => v === preset.fmt_pattern,
+      )?.[0] ?? "NNNN";
+    setFormat(fmtKey);
+    setStartNumber(preset.start_num);
+    setFileOperation(preset.file_op);
+    setRecursiveScan(preset.recursive);
+    setOrganizeByDate(preset.organize_by_date);
+    setOnlyPaired(preset.only_paired);
+    setIncludeVideo(preset.include_video);
   }, []);
 
   const handleClearLog = useCallback(() => {
@@ -487,8 +514,8 @@ function App() {
             height: orb.size,
             top: orb.top,
             left: orb.left,
-            right: (orb as Record<string, string>).right,
-            bottom: (orb as Record<string, string>).bottom,
+            right: (orb as unknown as Record<string, string>).right,
+            bottom: (orb as unknown as Record<string, string>).bottom,
             filter: "blur(80px)",
           }}
           animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -530,6 +557,12 @@ function App() {
           className="w-[900px] flex flex-col gap-3 overflow-y-auto p-4"
           style={{ borderRight: "1px solid var(--glass-divider)" }}
         >
+          <ActionButtons
+            isProcessing={isProcessing}
+            onRun={() => handleRun(false)}
+            onDryRun={() => handleRun(true)}
+            onStop={handleStop}
+          />
           {/* 2-column grid: Col1 = Source+Output, Col2 = Camera+Rename */}
           <div className="grid grid-cols-2 gap-3">
             {/* Column 1 */}
@@ -572,17 +605,30 @@ function App() {
             fileOperation={fileOperation}
             organizeByDate={organizeByDate}
             onlyPaired={onlyPaired}
+            includeVideo={includeVideo}
             onRecursiveScanChange={setRecursiveScan}
             onFileOperationChange={setFileOperation}
             onOrganizeByDateChange={setOrganizeByDate}
             onOnlyPairedChange={setOnlyPaired}
+            onIncludeVideoChange={setIncludeVideo}
           />
 
-          <ActionButtons
-            isProcessing={isProcessing}
-            onRun={() => handleRun(false)}
-            onDryRun={() => handleRun(true)}
-            onStop={handleStop}
+          {/* Preset manager */}
+          <PresetPanel
+            currentSettings={{
+              camera_preset: cameraPreset,
+              raw_extensions: rawExtensions,
+              file_type: fileType,
+              prefix,
+              fmt_pattern: FORMAT_TO_STRFTIME[format] ?? null,
+              start_num: startNumber,
+              file_op: fileOperation,
+              recursive: recursiveScan,
+              organize_by_date: organizeByDate,
+              only_paired: onlyPaired,
+              include_video: includeVideo,
+            }}
+            onApply={handleApplyPreset}
           />
 
           {/* Status banner */}

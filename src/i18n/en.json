@@ -51,7 +51,8 @@
     "move": "Move (delete originals)",
     "moveWarning": "Original files will be deleted",
     "organizeByDate": "Create YYYY-MM-DD/ subfolders in output",
-    "onlyPaired": "Skip unpaired JPG or RAW"
+    "onlyPaired": "Skip unpaired JPG or RAW",
+    "includeVideo": "Include video files (.mp4, .mov, .mts)"
   },
   "actions": {
     "run": "Run",
@@ -62,7 +63,12 @@
     "title": "LOG OUTPUT",
     "clear": "Clear",
     "empty": "Ready. Configure settings and press Run or Dry Run.",
-    "dryRunBadge": "DRY RUN"
+    "dryRunBadge": "DRY RUN",
+    "viewText": "Text log",
+    "viewTable": "Table log",
+    "tableStatus": "STATUS",
+    "tableSource": "SOURCE",
+    "tableDestination": "DESTINATION"
   },
   "status": {
     "ready": "Ready",
@@ -91,5 +97,15 @@
   "errors": {
     "noFolders": "Please add at least one source folder.",
     "noRawExt": "Please enter RAW extensions (e.g. .nef .nrw)"
+  },
+  "presets": {
+    "title": "PRESETS",
+    "save": "Save…",
+    "saveTooltip": "Save current settings as a preset",
+    "apply": "Apply",
+    "deleteTooltip": "Delete preset",
+    "empty": "No presets yet. Configure your settings and click Save…",
+    "selectPlaceholder": "Select a preset…",
+    "namePlaceholder": "Preset name (e.g. Sony Wedding A7IV)"
   }
 }

@@ -35,3 +35,21 @@ pub fn get_exif_datetime(path: &Path) -> Option<NaiveDateTime> {
 
     None
 }
+
+/// Extract datetime from a video file.
+/// Tries embedded EXIF first (some cameras embed EXIF in MP4/MOV),
+/// then falls back to the file's last-modified time.
+pub fn get_video_datetime(path: &Path) -> Option<NaiveDateTime> {
+    // Some cameras (Sony, Canon) embed EXIF in video containers
+    if let Some(dt) = get_exif_datetime(path) {
+        return Some(dt);
+    }
+
+    // Fall back to file system modification time
+    let mtime = std::fs::metadata(path).ok()?.modified().ok()?;
+    let secs = mtime
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs() as i64;
+    chrono::DateTime::from_timestamp(secs, 0).map(|dt| dt.naive_utc())
+}
