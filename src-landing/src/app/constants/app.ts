@@ -8,7 +8,7 @@ export const APP_DATA = {
   authorUrl: "https://baole.space",
   githubRepo: "https://github.com/unique01082/lightops",
   githubReleases: "https://github.com/unique01082/lightops/releases",
-  githubLatestRelease: "https://github.com/unique01082/lightops/releases/latest",
+  githubLatestRelease: "#download",
   latestJsonEndpoint: "https://github.com/unique01082/lightops/releases/latest/download/latest.json",
   techStack: ["Tauri 2", "Rust", "React", "TypeScript", "Tailwind CSS"],
   platform: "Desktop (Windows / macOS / Linux)",

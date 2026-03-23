@@ -98,7 +98,11 @@ export function Navbar() {
             >
               {i18n.language === "vi" ? "EN" : "VI"}
             </button>
-            <GradientButton size="sm" href={APP_DATA.githubLatestRelease}>
+            <GradientButton
+              size="sm"
+              href={APP_DATA.githubLatestRelease}
+              target="_self"
+            >
               {t("nav.downloadBtn")}
             </GradientButton>
 
